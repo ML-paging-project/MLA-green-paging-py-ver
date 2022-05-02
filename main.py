@@ -53,7 +53,7 @@ if __name__ == '__main__':
                                    EPS_DECAY, TARGET_UPDATE, window_size,
                                    miss_cost, number_of_box_kinds, NUMBER_OF_MODELS,
                                    num_episodes, seq)
-    opt_impact = alg.opt(seq, number_of_box_kinds, miss_cost)
+    opt_impact, _ = alg.opt(seq, 2**(number_of_box_kinds-1), number_of_box_kinds, miss_cost)
     michael_impact = alg.michael(seq, number_of_box_kinds, miss_cost)
     random_impact = alg.random_pick(seq, number_of_box_kinds, miss_cost)
 
