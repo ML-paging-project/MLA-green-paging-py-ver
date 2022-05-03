@@ -113,81 +113,76 @@ def LRU(sequence, size):
 
 def opt(sequence, k, number_of_box_kinds, miss_cost):
     print('running offline opt')
-
     # parameters
     n = len(sequence)
-
     ############################
     print('building dag...')
-    # find end indexes
-    # initialize table
-    end_index = [[0 for i in range(n)] for j in range(number_of_box_kinds)]
-    # find end indexes
+    # build dag
+    dag = nx.DiGraph()
+    edge2box = {}  # to reconstruct the opt box sequence
     for i in range(number_of_box_kinds):
+        end_index = [-1 for _ in range(n)]
         memory_size = math.floor(k / (2 ** i))
         # run lru on the whole sequence
         # with memory_size = k / (2 ** i)
         is_a_hit = LRU(sequence, memory_size)
-        # find the end index for node[i][0]
+        # find the end index for req[0]
         box_width = miss_cost * memory_size
         request_position = 0
-        actual_running_time = 0
-        while actual_running_time < box_width and request_position < n:
+        running_time = 0
+        while running_time < box_width and request_position < n:
             if is_a_hit[request_position]:
-                actual_running_time += 1
+                running_time += 1
             else:
-                actual_running_time += miss_cost
+                running_time += miss_cost
             request_position += 1
-        end_index[i][0] = request_position - 1
+        end_index[0] = request_position - 1
+        dag.add_edge(0, end_index[0] + 1, weight=memory_size * miss_cost * 3 * memory_size)
+        edge2box[(0, end_index[0] + 1)] = i
         # find end indexes for other nodes in row i
         for j in range(1, n):
             if is_a_hit[j - 1]:
-                actual_running_time = actual_running_time - 1
+                running_time = running_time - 1
             else:
-                actual_running_time = actual_running_time - miss_cost
-            if actual_running_time >= box_width:
-                end_index[i][j] = end_index[i][j - 1]
+                running_time = running_time - miss_cost
+            if running_time >= box_width:
+                end_index[j] = end_index[j - 1]
             else:
-                request_position = end_index[i][j - 1] + 1
-                while actual_running_time < box_width and request_position < n:
+                request_position = end_index[j - 1] + 1
+                while running_time < box_width and request_position < n:
                     if is_a_hit[request_position]:
-                        actual_running_time += 1
+                        running_time += 1
                     else:
-                        actual_running_time += miss_cost
+                        running_time += miss_cost
                     request_position += 1
-                end_index[i][j] = request_position - 1
+                end_index[j] = request_position - 1
+
+            if (j, end_index[j] + 1) in edge2box:
+                dag.remove_edge(j, end_index[j] + 1)
+            dag.add_edge(j, end_index[j] + 1, weight=memory_size * miss_cost * 3 * memory_size)
+            edge2box[(j, end_index[j] + 1)] = i
     #########################################
-    # turn the table to dag
-    dag = nx.DiGraph()
-    for i in range(number_of_box_kinds):
-        dag.add_edge('start', str(i) + '-0', weight=0)
-    for i in range(number_of_box_kinds):
-        for j in range(n):
-            if end_index[i][j] < (n - 1):
-                for ii in range(number_of_box_kinds):
-                    dag.add_edge(str(i) + '-' + str(j),
-                                 str(ii) + '-' + str(end_index[i][j] + 1),
-                                 weight=3 * miss_cost * (k / (2 ** i)) ** 2)
-            else:
-                dag.add_edge(str(i) + '-' + str(j), 'end',
-                             weight=3 * miss_cost * (k / (2 ** i)) ** 2)
+    # print(nx.is_directed_acyclic_graph(dag))
     print('searching the shortest path...')
     nodes_sorted = list(nx.topological_sort(dag))
     build_path = {}
     for v in nodes_sorted:
-        build_path[v] = (math.inf, 'null')
-    build_path['start'] = (0, 'null')
+        build_path[v] = (math.inf, -1)  # (distance to the beginning, predecessor)
+    build_path[0] = (0, -1)
     for u in nodes_sorted:
         for v in list(dag.successors(u)):
             if build_path[v][0] > build_path[u][0] + dag.edges[u, v]['weight']:
                 build_path[v] = (build_path[u][0] + dag.edges[u, v]['weight'], u)
-    path = ['end']
+    path = [n]
+    opt_box_seq = []
     while True:
         path.append(build_path[path[-1]][1])
-        if path[-1] == 'start':
+        opt_box_seq.append(edge2box[(path[-1], path[-2])])
+        if path[-1] == 0:
             break
-    opt_impact = build_path['end'][0]
-    opt_path = list(reversed(path))
+    opt_impact = build_path[n][0]
+    opt_box_seq = list(reversed(opt_box_seq))
+    # opt_path = list(reversed(path))
     # d = nx.dijkstra_path_length(dag, source='start', target='end')
     # print(d)
-    return opt_impact, opt_path
+    return opt_impact, opt_box_seq

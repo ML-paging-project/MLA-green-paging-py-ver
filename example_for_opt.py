@@ -1,6 +1,7 @@
 from other_algorithms import opt
 
 import matplotlib.pyplot as plt
+import time
 
 
 def read_seq(file):
@@ -16,24 +17,23 @@ def read_seq(file):
     return sequence
 
 
-seq = read_seq('cactusadm_test.csv')
+seq = read_seq('cactusadm_train.csv')
 
 k = 2 ** 7
 number_of_box_kinds = 8
-miss_cost = 1000
-opt_impact, opt_path = opt(seq, k, number_of_box_kinds, miss_cost)
-print('opt_impact=', opt_impact)
-print('opt box sequence is', opt_path)
+miss_cost = 100000
+s = time.time()
+opt_impact2, boxes = opt(seq, k, number_of_box_kinds, miss_cost)
+print('use', time.time() - s, 'secs')
+print('opt impact =', opt_impact2)
+print('opt box sequence is', boxes)
 
-# draw box profile
+# draw memory profile
 x = [0]
 y = [0]
 t = 0
-for v in opt_path:
-    if v in ['start', 'end']:
-        continue
-    box_id = int(v.split('-')[0])
-    box_size = k / (2 ** box_id)
+for b in boxes:
+    box_size = k / (2 ** b)
     x.append(t)
     y.append(box_size)
     t += box_size
@@ -41,7 +41,6 @@ for v in opt_path:
     y.append(box_size)
 x.append(t)
 y.append(0)
-
 
 plt.plot(x, y, linewidth=1, color="orange")
 plt.xlabel('time (normalized)')
