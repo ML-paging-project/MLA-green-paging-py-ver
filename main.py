@@ -45,6 +45,7 @@ if __name__ == '__main__':
     miss_cost = 1000  ##################
     # number_of_box_kinds = min(8,math.ceil(math.log2(miss_cost))) #############
     number_of_box_kinds = 8
+    k = 2 ** 7
     NUMBER_OF_MODELS = 10  # Train several models, choose the best
     num_episodes = 20
     ALPHA = 0.8  # Learning rate #########################
@@ -53,9 +54,9 @@ if __name__ == '__main__':
                                    EPS_DECAY, TARGET_UPDATE, window_size,
                                    miss_cost, number_of_box_kinds, NUMBER_OF_MODELS,
                                    num_episodes, seq)
-    opt_impact, _ = alg.opt(seq, 2**(number_of_box_kinds-1), number_of_box_kinds, miss_cost)
-    michael_impact = alg.michael(seq, number_of_box_kinds, miss_cost)
-    random_impact = alg.random_pick(seq, number_of_box_kinds, miss_cost)
+    opt_impact, _ = alg.opt(seq, k, number_of_box_kinds, miss_cost)
+    michael_impact = alg.michael(seq, k, number_of_box_kinds, miss_cost)
+    random_impact = alg.random_pick(seq, k, number_of_box_kinds, miss_cost)
 
     # draw plots
     plt.figure(figsize=(16, 9), dpi=50)

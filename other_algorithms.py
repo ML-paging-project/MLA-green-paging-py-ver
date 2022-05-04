@@ -7,7 +7,7 @@ import networkx as nx
 from lru import run_lru
 
 
-def random_pick(sequence, number_of_box_kinds, miss_cost):
+def random_pick(sequence, k, number_of_box_kinds, miss_cost):
     print('running random picking')
     total_impact = 0
     rounds = 1000
@@ -15,9 +15,9 @@ def random_pick(sequence, number_of_box_kinds, miss_cost):
         pointer = 0
         global_lru = collections.OrderedDict()
         while pointer < len(sequence):
-            startpointer = pointer
-            box = random.randint(0, number_of_box_kinds - 1)
-            cache_size = 2 ** box
+            start_pointer = pointer
+            box_id = random.randint(0, number_of_box_kinds - 1)
+            cache_size = k / (2 ** box_id)
             box_width = miss_cost * cache_size
             # Compartmentalization
             # Load top pages from LRU stack.
@@ -32,7 +32,7 @@ def random_pick(sequence, number_of_box_kinds, miss_cost):
             endpointer = pointer
 
             # Update global stack
-            for x in range(startpointer, endpointer):
+            for x in range(start_pointer, endpointer):
                 if sequence[x] in global_lru.keys():
                     global_lru.move_to_end(sequence[x], last=False)
                 else:
@@ -41,14 +41,13 @@ def random_pick(sequence, number_of_box_kinds, miss_cost):
 
             mi = 3 * miss_cost * cache_size * cache_size
             total_impact = total_impact + mi
-    print(total_impact / rounds)
+    # print(total_impact / rounds)
     return total_impact / rounds
 
 
-def michael(sequence, number_of_box_kinds, miss_cost):
-    print('running Michael\'s algorithm')
+def michael(sequence, k, number_of_box_kinds, miss_cost):
+    print('running Michael\'s algorithm...')
     # Michael's algorithm
-    MAXBOX = number_of_box_kinds - 1
     countings = [0 for i in range(number_of_box_kinds)]
     countings[0] = 1
     currentbox = 0
@@ -56,8 +55,8 @@ def michael(sequence, number_of_box_kinds, miss_cost):
     total_impact = 0
     global_lru = collections.OrderedDict()
     while pointer < len(sequence):
-        startpointer = pointer
-        cache_size = 2 ** currentbox
+        start_pointer = pointer
+        cache_size = k / (2 ** (number_of_box_kinds - currentbox - 1))
         box_width = miss_cost * cache_size
         # Compartmentalization
         # Load top pages from LRU stack.
@@ -72,7 +71,7 @@ def michael(sequence, number_of_box_kinds, miss_cost):
         endpointer = pointer
 
         # Update global stack
-        for x in range(startpointer, endpointer):
+        for x in range(start_pointer, endpointer):
             if sequence[x] in global_lru.keys():
                 global_lru.move_to_end(sequence[x], last=False)
             else:
@@ -81,7 +80,7 @@ def michael(sequence, number_of_box_kinds, miss_cost):
 
         mi = 3 * miss_cost * cache_size * cache_size
         total_impact = total_impact + mi
-        if currentbox == MAXBOX:
+        if currentbox == number_of_box_kinds - 1:
             currentbox = 0
         elif countings[currentbox] % 4 == 0:
             currentbox = currentbox + 1
@@ -90,7 +89,7 @@ def michael(sequence, number_of_box_kinds, miss_cost):
         countings[currentbox] = countings[currentbox] + 1
 
     # michael = [total_impact for hhh in range(num_episodes)]
-    print(total_impact)
+    # print(total_impact)
     return total_impact
 
 

@@ -21,7 +21,7 @@ seq = read_seq('cactusadm_train.csv')
 
 k = 2 ** 7
 number_of_box_kinds = 8
-miss_cost = 100000
+miss_cost = 100
 s = time.time()
 opt_impact2, boxes = opt(seq, k, number_of_box_kinds, miss_cost)
 print('use', time.time() - s, 'secs')
