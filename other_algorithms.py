@@ -172,16 +172,18 @@ def opt(sequence, k, number_of_box_kinds, miss_cost):
         for v in list(dag.successors(u)):
             if build_path[v][0] > build_path[u][0] + dag.edges[u, v]['weight']:
                 build_path[v] = (build_path[u][0] + dag.edges[u, v]['weight'], u)
-    path = [n]
+    box_start_points = [n]
     opt_box_seq = []
     while True:
-        path.append(build_path[path[-1]][1])
-        opt_box_seq.append(edge2box[(path[-1], path[-2])])
-        if path[-1] == 0:
+        box_start_points.append(build_path[box_start_points[-1]][1])
+        # box_start_points.append()
+        opt_box_seq.append(edge2box[(box_start_points[-1], box_start_points[-2])])
+        if box_start_points[-1] == 0:
             break
     opt_impact = build_path[n][0]
     opt_box_seq = list(reversed(opt_box_seq))
-    # opt_path = list(reversed(path))
+    box_start_points=list(reversed(box_start_points))
+    # opt_path = list(reversed(box_start_points))
     # d = nx.dijkstra_path_length(dag, source='start', target='end')
     # print(d)
-    return opt_impact, opt_box_seq
+    return opt_impact, opt_box_seq, box_start_points

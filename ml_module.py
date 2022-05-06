@@ -148,7 +148,7 @@ def optimize_model(memory, BATCH_SIZE, ALPHA, GAMMA,
     # Compute the expected Q values
 
     ##############################################
-    ## Maverick: I add learning rate ALPHA here ##
+    ## Maverick: I add learning rate INIT_ALPHA here ##
     ##############################################
     expected_state_action_values = ALPHA * ((next_state_values * GAMMA) + reward_batch)
 
@@ -165,7 +165,7 @@ def optimize_model(memory, BATCH_SIZE, ALPHA, GAMMA,
     return policy_net, optimizer
 
 
-def train_model(BATCH_SIZE, ALPHA, GAMMA, EPS_START, EPS_END,
+def train_model(k, BATCH_SIZE, INIT_ALPHA, GAMMA, EPS_START, EPS_END,
                 EPS_DECAY, TARGET_UPDATE, window_size,
                 miss_cost, number_of_box_kinds, NUMBER_OF_MODELS,
                 num_episodes, seq):
@@ -184,6 +184,8 @@ def train_model(BATCH_SIZE, ALPHA, GAMMA, EPS_START, EPS_END,
     best_target_net = DQN(window_size, number_of_box_kinds).to(device)
 
     for model in range(NUMBER_OF_MODELS):
+        alpha = INIT_ALPHA
+        decay = (alpha - 0.1) / num_episodes
         global_lru = OrderedDict()
         steps_done = 0
         policy_net = DQN(window_size, number_of_box_kinds).to(device)
@@ -208,12 +210,12 @@ def train_model(BATCH_SIZE, ALPHA, GAMMA, EPS_START, EPS_END,
                 state = torch.transpose(state, 1, 2)
                 action, steps_done = select_action(policy_net, state, steps_done,
                                                    EPS_START, EPS_END, EPS_DECAY,
-                                                   (i_episode + 1) / num_episodes > 0.9,
+                                                   False,
                                                    number_of_box_kinds)
                 box_id = action
                 # print(box_id)
                 hist[box_id] = hist[box_id] + 1
-                cache_size = 2 ** box_id
+                cache_size = k/(2 ** box_id)
                 box_width = miss_cost * cache_size
 
                 # Compartmentalization
@@ -256,7 +258,7 @@ def train_model(BATCH_SIZE, ALPHA, GAMMA, EPS_START, EPS_END,
                 state = next_state
 
                 # Perform one step of the optimization (on the policy network)
-                policy_net, optimizer = optimize_model(memory, BATCH_SIZE, ALPHA, GAMMA,
+                policy_net, optimizer = optimize_model(memory, BATCH_SIZE, alpha, GAMMA,
                                                        policy_net, target_net, optimizer)
 
             # Update the target network, copying all weights and biases in DQN
@@ -266,6 +268,9 @@ def train_model(BATCH_SIZE, ALPHA, GAMMA, EPS_START, EPS_END,
             print('MODEL-' + str(model))
             print('epoch=' + str(i_episode) + '..........impact=' + str(impact))
             result.append(impact.item())
+            print(result)
+            alpha -= decay
+            #alpha=alpha/5
 
             if i_episode % TARGET_UPDATE == 0:
                 target_net.load_state_dict(policy_net.state_dict())

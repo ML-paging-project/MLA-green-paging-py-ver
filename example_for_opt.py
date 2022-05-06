@@ -17,7 +17,7 @@ def read_seq(file):
     return sequence
 
 
-seq = read_seq('cactusadm_train.csv')
+seq = read_seq('gems_train.csv')
 
 k = 2 ** 7
 number_of_box_kinds = 8

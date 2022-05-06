@@ -21,14 +21,14 @@ def read_seq(file):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     # read data
-    f = open("seq-sort10k.ssv")
-    data = f.readline()
-    seq = data.split(' ')
-    print(seq[:10])
-    print(len(seq))
+    #f = open("seq-sort10k.ssv")
+    #data = f.readline()
+    #seq = data.split(' ')
+    #print(seq[:10])
+    #print(len(seq))
 
     # to use CRC traces:
-    # seq = read_seq('cactusadm_train.csv')
+    seq = read_seq('cactusadm_train.csv')
     # print(seq[:10])
     # print(len(seq))
     # CRC traces: https://github.com/chledowski/Robust-Learning-Augmented-Caching-An-Experimental-Study-Datasets/tree/main/datasets
@@ -36,21 +36,21 @@ if __name__ == '__main__':
     # ML parameters
     # see https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
     BATCH_SIZE = 8
-    GAMMA = 0.3
+    GAMMA = 0.99
     EPS_START = 0.9
     EPS_END = 0.00001
     EPS_DECAY = 500
-    TARGET_UPDATE = 5
+    TARGET_UPDATE = 2#5
     window_size = 256  # for features
     miss_cost = 1000  ##################
     # number_of_box_kinds = min(8,math.ceil(math.log2(miss_cost))) #############
     number_of_box_kinds = 8
     k = 2 ** 7
-    NUMBER_OF_MODELS = 10  # Train several models, choose the best
-    num_episodes = 20
-    ALPHA = 0.8  # Learning rate #########################
+    NUMBER_OF_MODELS = 1  # Train several models, choose the best
+    num_episodes = 10
+    INIT_ALPHA = 0.9  # Learning rate #########################
 
-    net, best_result = train_model(BATCH_SIZE, ALPHA, GAMMA, EPS_START, EPS_END,
+    net, best_result = train_model(k, BATCH_SIZE, INIT_ALPHA, GAMMA, EPS_START, EPS_END,
                                    EPS_DECAY, TARGET_UPDATE, window_size,
                                    miss_cost, number_of_box_kinds, NUMBER_OF_MODELS,
                                    num_episodes, seq)
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     plt.xlabel('Training epoch', fontsize=20)
     plt.ylabel('Memory impact', fontsize=20)
     plt.xticks(fontsize=20)
-    plt.yticks(fontsize=20)
+    plt.yticks(fontsize=15)
     plt.ylim(0, max(random_impact, max(best_result), michael_impact) + 500000000)
     plt.plot([x for x in range(1, num_episodes + 1)], best_result, label='oracle',
              linestyle='-', color='g', marker='x', linewidth=1.5)
